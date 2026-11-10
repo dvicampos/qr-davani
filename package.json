@@ -1,0 +1,19 @@
+{
+  "name": "qr-atelier-react-studio",
+  "private": true,
+  "version": "5.0.0",
+  "type": "module",
+  "description": "Estudio de codigos QR y composiciones vectoriales, construido con React.",
+  "scripts": {
+    "dev": "vite --host 0.0.0.0",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "vite": "^6.1.0"
+  }
+}
