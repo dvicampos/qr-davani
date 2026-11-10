@@ -1,6 +1,5 @@
-/* QR ATELIER STUDIO v5 — React, offline. QR encoder credited separately in qr-engine.js. */
-(function(){
-'use strict';
+/* QR ATELIER STUDIO v7 · React 18 + Vite · All UI is React */
+import React from 'react';
 const h=React.createElement;
 const $=id=>document.getElementById(id);
 const svgEsc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
@@ -50,8 +49,12 @@ const paths={
 function I(n,sz=19){return h('svg',{className:'ico',style:{width:sz,height:sz},viewBox:'0 0 24 24',fill:'none',stroke:'currentColor',strokeWidth:1.75,strokeLinecap:'round',strokeLinejoin:'round',ariaHidden:true,dangerouslySetInnerHTML:{__html:paths[n]||paths.link}});}
 const TYPES=[['url','Enlace web','link'],['wifi','Red Wi-Fi','wifi'],['vcard','Contacto vCard','user'],['whatsapp','WhatsApp','whatsapp'],['social','Redes sociales','instagram'],['text','Texto libre','text'],['email','Correo electrónico','mail'],['phone','Teléfono','phone'],['sms','Mensaje SMS','sms'],['calendar','Evento','calendar'],['location','Ubicación','pin'],['crypto','Criptomonedas','crypto'],['coupon','Cupón','voucher']];
 const LOGO_ICONS=['link','instagram','whatsapp','shop','globe','wifi','youtube','x','linkedin','phone','mail','calendar'];
-const SHAPES=[['liquid','Fluido'],['capsule','Píldoras'],['dots','Puntos'],['soft','Redondeado'],['diamond','Rombo'],['square','Clásico']];
+const SHAPES=[['liquid','Fluido','Contorno orgánico continuo'],['cloud','Nube','Más suave y redondo'],['geo','Geo','Orgánico con más filo'],['silk','Seda','Bordes ultrafluidos'],['tide','Marea','Curvas abiertas y modernas'],['mini','Micro','Curva contenida'],['capsule','Píldoras','Segmentos suaves'],['ribbon','Cinta','Franjas con más presencia'],['dots','Puntos','Círculos uniformes'],['soft','Redondeado','Módulos suaves individuales'],['diamond','Rombo','Diamantes estilizados'],['square','Clásico','Cuadrícula tradicional']];
 const PRESETS=[
+  {id:'royal',name:'Azul rey',p:'#123cbb',s:'#2876fa',eye:'#103784',dot:'#1c58a3',bg:'#ffffff',gradient:'solid'},
+  {id:'ice',name:'Ice Blue',p:'#0c426f',s:'#36b6df',eye:'#0c426f',dot:'#167ea4',bg:'#ffffff',gradient:'linear'},
+  {id:'navy',name:'Marino',p:'#0e203f',s:'#3271b6',eye:'#0e203f',dot:'#3271b6',bg:'#ffffff',gradient:'solid'},
+  {id:'mint',name:'Mint',p:'#124c53',s:'#38a69a',eye:'#124c53',dot:'#157777',bg:'#ffffff',gradient:'linear'},
   {id:'atelier',name:'Atelier',p:'#161e37',s:'#6556e9',eye:'#161e37',dot:'#6556e9',bg:'#ffffff',gradient:'solid'},
   {id:'midnight',name:'Midnight',p:'#111827',s:'#475569',eye:'#111827',dot:'#111827',bg:'#ffffff',gradient:'solid'},
   {id:'violet',name:'Violet',p:'#4427a3',s:'#7d61f2',eye:'#332379',dot:'#4427a3',bg:'#ffffff',gradient:'linear'},
@@ -61,7 +64,7 @@ const PRESETS=[
   {id:'berry',name:'Berry',p:'#60203c',s:'#a43d74',eye:'#60203c',dot:'#60203c',bg:'#ffffff',gradient:'linear'},
   {id:'gold',name:'Luxury',p:'#151515',s:'#b08444',eye:'#151515',dot:'#151515',bg:'#ffffff',gradient:'solid'}];
 const DF={url:'https://ejemplo.com',ssid:'',password:'',encryption:'WPA',hidden:false,first:'',last:'',company:'',job:'',mobile:'',workPhone:'',contactEmail:'',website:'',address:'',waNumber:'',waMessage:'Hola, me gustaría recibir más información.',socialPlatform:'instagram',socialProfile:'',text:'',emailTo:'',emailSubject:'',emailBody:'',phoneNumber:'',smsNumber:'',smsBody:'',eventName:'',eventStart:'',eventEnd:'',eventLocation:'',eventDescription:'',lat:'',lng:'',placeLabel:'',cryptoType:'bitcoin',cryptoAddress:'',cryptoAmount:'',couponName:'',couponCode:'',couponDetails:''};
-const DEF={type:'url',fields:{...DF},tab:'design',preset:'atelier',shape:'liquid',eye:'rounded',pupil:'circle',primary:'#161e37',secondary:'#6556e9',eyeColor:'#161e37',pupilColor:'#6556e9',background:'#ffffff',gradient:'solid',angle:40,transparent:false,margin:4,logoMode:'none',logoIcon:'link',logoData:'',logoSize:17,logoMargin:1.5,logoPlate:true,frame:'none',cta:'ESCANEA AQUÍ',subtitle:'Descubre más',level:'Q',mockup:'qr',exportSize:2048,printSize:10,theme:'light'};
+const DEF={type:'url',fields:{...DF},tab:'design',preset:'royal',shape:'liquid',eye:'rounded',pupil:'circle',primary:'#123cbb',secondary:'#2876fa',tertiary:'#25c0e8',eyeColor:'#103784',pupilColor:'#1c58a3',background:'#ffffff',gradient:'solid',angle:40,transparent:false,margin:4,moduleScale:92,curve:60,eyeStroke:1,logoMode:'none',logoIcon:'link',logoData:'',logoSize:17,logoMargin:1.5,logoPlate:true,frame:'none',cta:'ESCANEA AQUÍ',subtitle:'Descubre más',level:'Q',mockup:'qr',exportSize:2048,printSize:10,theme:'light'};
 const F=(key,label,opts={})=>({key,label,...opts});
 const FORMS={
   url:[F('url','Dirección URL',{wide:true,placeholder:'https://ejemplo.com/producto',required:true})],
@@ -104,28 +107,37 @@ function makeData(s){const f=s.fields;let data='',error='';const digits=v=>Strin
 }
 function luminance(hex){const rgb=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255).map(v=>v<=.04045?v/12.92:Math.pow((v+.055)/1.055,2.4));return .2126*rgb[0]+.7152*rgb[1]+.0722*rgb[2];}
 function ratio(a,b){let A=luminance(a),B=luminance(b);return (Math.max(A,B)+.05)/(Math.min(A,B)+.05);}
-function contrast(s){const bg=s.transparent?'#ffffff':s.background;let ink=[s.primary,s.eyeColor,s.pupilColor];if(s.gradient!=='solid')ink.push(s.secondary);const min=Math.min(...ink.map(c=>ratio(c,bg)));const warns=[];if(min<4.5)warns.push('Contraste bajo: prueba una paleta con tinta oscura y fondo claro.');if(s.transparent)warns.push('El contraste final dependerá del fondo donde coloques el QR.');if(s.margin<4)warns.push('Mantén al menos 4 módulos de margen blanco alrededor.');if(s.logoMode!=='none'&&s.logoSize>20)warns.push('Los logotipos grandes pueden interferir con la lectura.');if(s.logoMode!=='none'&&s.level!=='H')warns.push('Con logotipo se recomienda corrección H.');if(s.shape==='diamond')warns.push('El estilo rombo debe probarse especialmente antes de imprimir.');if(s.eye!=='square')warns.push('Los ojos redondos pueden fallar en algunos lectores: comprueba el código antes de imprimir.');return {ratio:min,warns,good:min>=4.5&&warns.length===0};}
-// QR Studio 5: a single continuous vector shape for organic modules, with
-// rounded outside contours and smaller inside corners. No tile boundaries.
-function shapeCell(x,y,style){
-  if(style==='dots')return `<circle cx="${x+.5}" cy="${y+.5}" r=".43"/>`;
-  if(style==='soft')return `<rect x="${x+.055}" y="${y+.055}" width=".89" height=".89" rx=".36"/>`;
-  if(style==='diamond')return `<path d="M${x+.5} ${y+.03}L${x+.97} ${y+.5}L${x+.5} ${y+.97}L${x+.03} ${y+.5}Z"/>`;
+function contrast(s){const bg=s.transparent?'#ffffff':s.background;let ink=[s.primary,s.eyeColor,s.pupilColor];if(s.gradient!=='solid')ink.push(s.secondary);if(s.gradient==='tritone')ink.push(s.tertiary);const min=Math.min(...ink.map(c=>ratio(c,bg)));const warns=[];if(min<4.5)warns.push('Contraste bajo: prueba una paleta con tinta oscura y fondo claro.');if(s.transparent)warns.push('El contraste final dependerá del fondo donde coloques el QR.');if(s.margin<4)warns.push('Mantén al menos 4 módulos de margen blanco alrededor.');if(s.logoMode!=='none'&&s.logoSize>20)warns.push('Los logotipos grandes pueden interferir con la lectura.');if(s.logoMode!=='none'&&s.level!=='H')warns.push('Con logotipo se recomienda corrección H.');if(s.shape==='diamond')warns.push('El estilo rombo debe probarse especialmente antes de imprimir.');if(s.eye!=='square')warns.push('Los ojos redondos pueden fallar en algunos lectores: comprueba el código antes de imprimir.');if(s.moduleScale<84)warns.push('Los módulos muy finos pueden perder fuerza al imprimir pequeño.');return {ratio:min,warns,good:min>=4.5&&warns.length===0};}
+
+// QR Studio 6: continuous organic vectors + configurable strength and curve
+// parameters so the QR never falls back to a tiled mosaic appearance.
+function shapeCell(x,y,style,opts={}){
+  const scale=Math.max(.76,Math.min(1.04,(opts.moduleScale??92)/100));
+  const inset=(1-scale)/2;
+  const curve=(opts.curve??60)/100;
+  if(style==='dots'){
+    const r=.26+scale*.19;
+    return `<circle cx="${x+.5}" cy="${y+.5}" r="${r.toFixed(3)}"/>`;
+  }
+  if(style==='soft'){
+    const size=(1-inset*2).toFixed(3), rad=(.18+.28*curve).toFixed(3);
+    return `<rect x="${(x+inset).toFixed(3)}" y="${(y+inset).toFixed(3)}" width="${size}" height="${size}" rx="${rad}"/>`;
+  }
+  if(style==='diamond'){
+    const p=.5*scale, left=(x+.5-p).toFixed(3), top=(y+.5-p).toFixed(3), right=(x+.5+p).toFixed(3), bottom=(y+.5+p).toFixed(3);
+    return `<path d="M${(x+.5).toFixed(3)} ${top}L${right} ${(y+.5).toFixed(3)}L${(x+.5).toFixed(3)} ${bottom}L${left} ${(y+.5).toFixed(3)}Z"/>`;
+  }
   return `<rect x="${x}" y="${y}" width="1" height="1"/>`;
 }
-function vectorModules(n,quiet,isOn,style){
+function vectorModules(n,quiet,isOn,style,opts={}){
   const fmt=v=>Number(v.toFixed(3));
-  if(style==='liquid'){
-    // Build the actual silhouette of the entire QR data region, not one
-    // rectangle/path per dark cell. Empty cells remain holes in the path.
+  const contourPresets={liquid:[.36,.12],cloud:[.46,.18],geo:[.24,.06],silk:[.45,.075],tide:[.38,.12],mini:[.19,.11]};
+  if(contourPresets[style]){
+    const [outerBase,innerBase]=contourPresets[style];
+    const softness=(opts.curve??60)/100;
+    const outer=outerBase*(.82+.34*softness), inner=innerBase*(.75+.5*softness);
     const edges=[],starts=new Map();
-    const add=(x1,y1,x2,y2,dir)=>{
-      const edge={a:[x1,y1],b:[x2,y2],dir,used:false};
-      edges.push(edge);
-      const k=x1+','+y1;
-      if(!starts.has(k))starts.set(k,[]);
-      starts.get(k).push(edge);
-    };
+    const add=(x1,y1,x2,y2,dir)=>{const edge={a:[x1,y1],b:[x2,y2],dir,used:false};edges.push(edge);const k=x1+','+y1;if(!starts.has(k))starts.set(k,[]);starts.get(k).push(edge);};
     for(let r=0;r<n;r++)for(let c=0;c<n;c++){
       if(!isOn(r,c))continue;
       const x=c+quiet,y=r+quiet;
@@ -137,14 +149,12 @@ function vectorModules(n,quiet,isOn,style){
     const rings=[];
     for(const first of edges){
       if(first.used)continue;
-      const points=[];
-      let edge=first,guard=0;
+      const points=[]; let edge=first,guard=0;
       while(edge&&!edge.used&&guard++<edges.length+1){
-        edge.used=true;
-        points.push(edge.a);
-        const opts=starts.get(edge.b.join(','))||[];
+        edge.used=true; points.push(edge.a);
+        const opts2=starts.get(edge.b.join(','))||[];
         const order=[(edge.dir+1)%4,edge.dir,(edge.dir+3)%4,(edge.dir+2)%4];
-        edge=order.map(d=>opts.find(v=>!v.used&&v.dir===d)).find(Boolean);
+        edge=order.map(d=>opts2.find(v=>!v.used&&v.dir===d)).find(Boolean);
         if(!edge)break;
       }
       if(points.length<3)continue;
@@ -153,45 +163,51 @@ function vectorModules(n,quiet,isOn,style){
         const prev=points[(i+points.length-1)%points.length],p=points[i],next=points[(i+1)%points.length];
         const ux=p[0]-prev[0],uy=p[1]-prev[1],vx=next[0]-p[0],vy=next[1]-p[1];
         const turn=ux*vy-uy*vx;
-        const d=turn===0?0:(turn>0?.36:.12);
+        const d=turn===0?0:(turn>0?outer:inner);
         const a=[fmt(p[0]-ux*d),fmt(p[1]-uy*d)],b=[fmt(p[0]+vx*d),fmt(p[1]+vy*d)];
-        if(i===0)part+=`M${a[0]} ${a[1]}`;
-        else part+=`L${a[0]} ${a[1]}`;
-        if(d)part+=`Q${p[0]} ${p[1]} ${b[0]} ${b[1]}`;
-        else part+=`L${b[0]} ${b[1]}`;
+        if(i===0)part+=`M${a[0]} ${a[1]}`; else part+=`L${a[0]} ${a[1]}`;
+        if(d)part+=`Q${p[0]} ${p[1]} ${b[0]} ${b[1]}`; else part+=`L${b[0]} ${b[1]}`;
       }
-      part+='Z';
-      rings.push(part);
+      part+='Z'; rings.push(part);
     }
     return `<path fill-rule="evenodd" d="${rings.join('')}"/>`;
   }
-  if(style==='capsule'||style==='square'){
-    const paths=[];
+  if(style==='capsule'||style==='square'||style==='ribbon'){
+    const paths=[]; const scale=Math.max(.76,Math.min(1.04,(opts.moduleScale??92)/100));
     for(let r=0;r<n;r++){
       for(let c=0;c<n;){
         if(!isOn(r,c)){c++;continue;}
         const begin=c;
         while(c<n&&isOn(r,c))c++;
         const len=c-begin;
-        if(style==='capsule')paths.push(`<rect x="${fmt(quiet+begin+.06)}" y="${fmt(quiet+r+.13)}" width="${fmt(len-.12)}" height=".74" rx=".37"/>`);
-        else paths.push(`<rect x="${quiet+begin}" y="${quiet+r}" width="${len}" height="1"/>`);
+        if(style==='capsule'){
+          const h=.42+.42*scale, y=quiet+r+(1-h)/2, rx=Math.min(.48,h/2);
+          paths.push(`<rect x="${fmt(quiet+begin+.03)}" y="${fmt(y)}" width="${fmt(len-.06)}" height="${fmt(h)}" rx="${fmt(rx)}"/>`);
+        }else if(style==='ribbon'){
+          const h=.58+.34*scale, y=quiet+r+(1-h)/2, rx=Math.min(.49,h/2);
+          paths.push(`<rect x="${fmt(quiet+begin+.01)}" y="${fmt(y)}" width="${fmt(len-.02)}" height="${fmt(h)}" rx="${fmt(rx)}"/>`);
+        }else paths.push(`<rect x="${quiet+begin}" y="${quiet+r}" width="${len}" height="1"/>`);
       }
     }
     return paths.join('');
   }
   const parts=[];
-  for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(isOn(r,c))parts.push(shapeCell(quiet+c,quiet+r,style));
+  for(let r=0;r<n;r++)for(let c=0;c<n;c++)if(isOn(r,c))parts.push(shapeCell(quiet+c,quiet+r,style,opts));
   return parts.join('');
 }
 function shapeThumbnail(style){
   const pixels=['1101100','1110110','0111101','1111110','1001111','0110110','1011101'];
   const on=(r,c)=>r>=0&&r<7&&c>=0&&c<7&&pixels[r][c]==='1';
-  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-.2 -.2 7.4 7.4" aria-hidden="true"><g fill="currentColor">${vectorModules(7,0,on,style)}</g></svg>`;
+  return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-.2 -.2 7.4 7.4" aria-hidden="true"><g fill="currentColor">${vectorModules(7,0,on,style,{moduleScale:92,curve:60})}</g></svg>`;
 }
-function finder(x,y,s){const outer=s.eyeColor,core=s.pupilColor,kind=s.eye;let ring='';
-  if(kind==='circle')ring=`<circle cx="${x+3.5}" cy="${y+3.5}" r="2.98" stroke="${outer}" stroke-width="1.03" fill="none"/>`;
-  else ring=`<rect x="${x+.5}" y="${y+.5}" width="6" height="6" rx="${kind==='square'?0:.38}" stroke="${outer}" stroke-width="1" fill="none"/>`;
-  const coreShape=s.pupil==='circle'?`<circle cx="${x+3.5}" cy="${y+3.5}" r="1.48" fill="${core}"/>`:`<rect x="${x+2.04}" y="${y+2.04}" width="2.92" height="2.92" rx="${s.pupil==='soft'?.64:0}" fill="${core}"/>`;
+function finder(x,y,s){const outer=s.eyeColor,core=s.pupilColor,kind=s.eye,sw=s.eyeStroke||1;let ring='';
+  if(kind==='circle')ring=`<circle cx="${x+3.5}" cy="${y+3.5}" r="${(2.98-.02*(sw-1)).toFixed(3)}" stroke="${outer}" stroke-width="${sw.toFixed(2)}" fill="none"/>`;
+  else {
+    const rx=kind==='square'?0:(.28+.2*Math.min(1,((s.curve||60)/100))).toFixed(3);
+    ring=`<rect x="${(x+.5).toFixed(3)}" y="${(y+.5).toFixed(3)}" width="6" height="6" rx="${rx}" stroke="${outer}" stroke-width="${sw.toFixed(2)}" fill="none"/>`;
+  }
+  const pupilScale=.92+.10*Math.min(1,((s.moduleScale||92)-76)/28), coreSize=(2.78*pupilScale).toFixed(3), coreInset=((7-Number(coreSize))/2).toFixed(3), coreRx=s.pupil==='soft'?(0.42+.26*((s.curve||60)/100)).toFixed(3):0;
+  const coreShape=s.pupil==='circle'?`<circle cx="${x+3.5}" cy="${y+3.5}" r="${(1.34+.18*((s.moduleScale||92)/100)).toFixed(3)}" fill="${core}"/>`:`<rect x="${(x+Number(coreInset)).toFixed(3)}" y="${(y+Number(coreInset)).toFixed(3)}" width="${coreSize}" height="${coreSize}" rx="${s.pupil==='soft'?coreRx:0}" fill="${core}"/>`;
   return ring+coreShape;
 }
 function logoIconSvg(name){const path=paths[name]||paths.link;return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><circle cx="32" cy="32" r="30" fill="#fff"/><g transform="translate(9 9) scale(1.92)" stroke="#1d233b" stroke-width="1.85" fill="none" stroke-linecap="round" stroke-linejoin="round">${path}</g></svg>`;}
@@ -199,13 +215,13 @@ function embeddedLogo(s){if(s.logoMode==='image')return s.logoData; if(s.logoMod
 function renderQR(s,data){const qr=window.QREncoder.create(data,s.level);const n=qr.getModuleCount(),quiet=Math.max(2,s.margin),side=n+quiet*2;const logo=embeddedLogo(s);const hasLogo=!!logo;
   const logoDim=hasLogo?n*s.logoSize/100:0,pad=hasLogo?s.logoMargin:0,center=quiet+n/2,half=logoDim/2+pad;
   const cellOn=(r,c)=>r>=0&&r<n&&c>=0&&c<n&&qr.isDark(r,c)&&!((r<7&&c<7)||(r<7&&c>=n-7)||(r>=n-7&&c<7))&&!(hasLogo&&Math.abs(quiet+c+.5-center)<half&&Math.abs(quiet+r+.5-center)<half);
-  const cells=vectorModules(n,quiet,cellOn,s.shape);
+  const cells=vectorModules(n,quiet,cellOn,s.shape,{moduleScale:s.moduleScale,curve:s.curve});
   // SVG gradients default to objectBoundingBox and otherwise restart per module.
   // User-space coordinates make the whole QR a continuous, seamless gradient.
   const theta=s.angle*Math.PI/180;
   const x1=(side*(.5-.5*Math.cos(theta))).toFixed(3),y1=(side*(.5-.5*Math.sin(theta))).toFixed(3);
   const x2=(side*(.5+.5*Math.cos(theta))).toFixed(3),y2=(side*(.5+.5*Math.sin(theta))).toFixed(3);
-  const gradient=s.gradient==='solid'?'':s.gradient==='radial'?`<radialGradient id="qrGrad" gradientUnits="userSpaceOnUse" cx="${side/2}" cy="${side/2}" r="${side*.68}"><stop offset="0%" stop-color="${s.primary}"/><stop offset="100%" stop-color="${s.secondary}"/></radialGradient>`:`<linearGradient id="qrGrad" gradientUnits="userSpaceOnUse" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"><stop offset="0%" stop-color="${s.primary}"/><stop offset="100%" stop-color="${s.secondary}"/></linearGradient>`;
+  const gradient=s.gradient==='solid'?'':s.gradient==='radial'?`<radialGradient id="qrGrad" gradientUnits="userSpaceOnUse" cx="${side/2}" cy="${side/2}" r="${side*.68}"><stop offset="0%" stop-color="${s.primary}"/><stop offset="100%" stop-color="${s.secondary}"/></radialGradient>`:`<linearGradient id="qrGrad" gradientUnits="userSpaceOnUse" x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}"><stop offset="0%" stop-color="${s.primary}"/>${s.gradient==='tritone'?`<stop offset="52%" stop-color="${s.tertiary||'#24c4ee'}"/>`:''}<stop offset="100%" stop-color="${s.secondary}"/></linearGradient>`;
   let inside=`<defs>${gradient}</defs>`;
   if(!s.transparent)inside+=`<rect width="${side}" height="${side}" fill="${s.background}"/>`;
   inside+=`<g fill="${s.gradient==='solid'?s.primary:'url(#qrGrad)'}">${cells}</g>`;
@@ -278,14 +294,14 @@ class Studio extends React.Component{
  renderDesign(){const s=this.state;return h('div',null,
    this.block('Plantillas de diseñador','Paletas cuidadosamente combinadas para marcas, productos y eventos.',h('div',{className:'presetgrid'},PRESETS.map(p=>h('button',{key:p.id,className:'preset '+(s.preset===p.id?'selected':''),onClick:()=>this.preset(p.id)},h('span',{className:'presetpreview',style:{background:p.bg,color:p.p}},h('span',null)),h('strong',null,p.name)))),'01'),
    this.block('Forma de los módulos','Escoge trazos fluidos, píldoras o puntos. Todos los módulos comparten un solo color o degradado continuo.',h('div',null,
-     h('div',{className:'shapes'},SHAPES.map(x=>h('button',{key:x[0],className:'shape '+(s.shape===x[0]?'active':''),onClick:()=>this.setP('shape',x[0])},h('span',{className:'shapeart '+x[0],dangerouslySetInnerHTML:{__html:shapeThumbnail(x[0])}}),x[1]))),
+     h('div',{className:'shapes'},SHAPES.map(x=>h('button',{key:x[0],className:'shape '+(s.shape===x[0]?'active':''),onClick:()=>this.setP('shape',x[0])},h('span',{className:'shapeart '+x[0],dangerouslySetInnerHTML:{__html:shapeThumbnail(x[0])}}),h('span',null,x[1]),h('small',null,x[2])))),
      h('div',{className:'inlinehelp'},I('sparkles',16),'Fluido es un contorno vectorial continuo: sin uniones visibles. Las píldoras son trazos horizontales redondeados.')),'02'),
    this.block('Ojos y contorno','Personaliza los tres marcadores exteriores y el estilo del centro.',h('div',{className:'fieldgrid'},
      h('label',{className:'field'},h('span',{className:'label'},'Forma exterior'),h('select',{value:s.eye,onChange:e=>this.setP('eye',e.target.value)},[['rounded','Redondeado'],['circle','Circular'],['square','Cuadrado']].map(v=>h('option',{key:v[0],value:v[0]},v[1])))),
      h('label',{className:'field'},h('span',{className:'label'},'Centro'),h('select',{value:s.pupil,onChange:e=>this.setP('pupil',e.target.value)},[['circle','Circular'],['soft','Suave'],['square','Cuadrado']].map(v=>h('option',{key:v[0],value:v[0]},v[1]))))),'03'),
    this.block('Tintas y degradados','El degradado ahora recorre el código completo y no se repite en cada módulo.',h('div',null,
      this.seg('Tipo de degradado',[['solid','Color sólido'],['linear','Lineal'],['radial','Radial']],s.gradient,v=>this.setP('gradient',v)),
-     s.gradient==='linear'?h('div',{style:{marginTop:15}},this.range('Ángulo','angle',0,360,5,'°')):null,
+     (s.gradient==='linear'||s.gradient==='tritone')?h('div',{style:{marginTop:15}},this.range('Ángulo','angle',0,360,5,'°')):null,
      h('div',{className:'subdivider'}),this.colors(s),
      h('div',{className:'sectionrow',style:{marginTop:17}},h('span',{className:'label'},'Fondo transparente'),h('input',{className:'toggle',type:'checkbox',checked:s.transparent,onChange:e=>this.setP('transparent',e.target.checked)}))),'04')
  );}
@@ -452,13 +468,151 @@ function composed(s,qrArt){
   return {svg:output,width:W,height:H,n:qrArt.n,data:qrArt.data,error:''};
 }
 
-const PRO_DEFAULTS={tab:'design',mockup:'qr',exportTarget:'qr',brandName:'LUMEN STUDIO',contactName:'Ideas que conectan',brandDetail:'WWW.TUMARCA.COM',designStyle:'linen',layoutMode:'right',typeface:'sans',texture:false,roundedArt:true,animation:true};
+
+/* Studio Lab: all tools operate locally in the browser, without server APIs. */
+const BRAND_KEYS=['primary','secondary','tertiary','eyeColor','pupilColor','background','gradient','angle','shape','moduleScale','curve','eyeStroke','eye','pupil','brandName','contactName','brandDetail','cta','subtitle','designStyle','typeface','texture','roundedArt','layoutMode'];
+const PROOF_STYLES=[
+  {id:'royal',name:'Royal Contour',subtitle:'Cobalto · trazos unidos',shape:'liquid',primary:'#103db8',secondary:'#2775f7',eyeColor:'#103783',pupilColor:'#2072df',gradient:'solid'},
+  {id:'cloud',name:'Cloud Motion',subtitle:'Puntillas muy suaves',shape:'cloud',primary:'#153878',secondary:'#45a2d2',eyeColor:'#153878',pupilColor:'#2779a5',gradient:'linear'},
+  {id:'silk',name:'Silk Ink',subtitle:'Silhueta delicada',shape:'silk',primary:'#14263a',secondary:'#688399',eyeColor:'#14263a',pupilColor:'#14263a',gradient:'solid'},
+  {id:'ocean',name:'Ocean Current',subtitle:'Acento turquesa',shape:'tide',primary:'#05485c',secondary:'#00a0aa',eyeColor:'#073f51',pupilColor:'#05849b',gradient:'linear'},
+  {id:'noir',name:'Noir Ribbons',subtitle:'Cinta editorial',shape:'ribbon',primary:'#14213d',secondary:'#40516a',eyeColor:'#14213d',pupilColor:'#263c5d',gradient:'solid'},
+  {id:'pixel',name:'Minimal Dot',subtitle:'Puntos limpios',shape:'dots',primary:'#173f85',secondary:'#1a75d7',eyeColor:'#173f85',pupilColor:'#173f85',gradient:'solid'}
+];
+function getKits(){try{const x=JSON.parse(localStorage.getItem('qrAtelierBrandKitsV7')||'[]');return Array.isArray(x)?x.slice(0,12):[];}catch{return [];}}
+function saveKits(kits){localStorage.setItem('qrAtelierBrandKitsV7',JSON.stringify(kits.slice(0,12)));}
+function cleanName(s){return (String(s||'diseño').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z0-9_-]+/g,'-').replace(/^-|-$/g,'').slice(0,55)||'codigo').toLowerCase();}
+function csvValue(s){return '"'+String(s||'').replace(/"/g,'""')+'"';}
+function parseBatchInput(src){const entries=String(src||'').split(/\r?\n/).map((line,i)=>({line:line.trim(),index:i+1})).filter(x=>x.line);
+  if(entries.length>40)throw Error('Máximo 40 enlaces por lote para mantener la descarga ligera.');
+  const result=[],errors=[],seen=new Set();
+  for(const e of entries){const at=e.line.indexOf('|');const label=at>=0?e.line.slice(0,at).trim():'';const raw=at>=0?e.line.slice(at+1).trim():e.line;const url=normalizeUrl(raw);
+    if(!url){errors.push('Línea '+e.index+': URL inválida');continue;}
+    if(seen.has(url)){errors.push('Línea '+e.index+': URL repetida');continue;}seen.add(url);
+    result.push({title:label||new URL(url).hostname,url,index:e.index});
+  }
+  return {entries:result,errors};
+}
+function zipArchive(files){
+  const chunks=[],center=[];let offset=0;
+  const encode=t=>new TextEncoder().encode(t);
+  const write16=(dv,i,v)=>dv.setUint16(i,v,true),write32=(dv,i,v)=>dv.setUint32(i,v,true);
+  for(const f of files){const name=encode(f.name),data=typeof f.data==='string'?encode(f.data):f.data;const sum=crc(data);
+    const local=new Uint8Array(30+name.length),l=new DataView(local.buffer);
+    write32(l,0,0x04034b50);write16(l,4,20);write16(l,6,0x0800);write16(l,8,0);write16(l,10,0);write16(l,12,33);
+    write32(l,14,sum);write32(l,18,data.length);write32(l,22,data.length);write16(l,26,name.length);write16(l,28,0);local.set(name,30);
+    const c=new Uint8Array(46+name.length),v=new DataView(c.buffer);
+    write32(v,0,0x02014b50);write16(v,4,20);write16(v,6,20);write16(v,8,0x0800);write16(v,10,0);write16(v,12,0);write16(v,14,33);
+    write32(v,16,sum);write32(v,20,data.length);write32(v,24,data.length);write16(v,28,name.length);
+    write16(v,30,0);write16(v,32,0);write16(v,34,0);write16(v,36,0);write32(v,38,0);write32(v,42,offset);c.set(name,46);
+    chunks.push(local,data);center.push(c);offset+=local.length+data.length;
+  }
+  const cSize=center.reduce((a,b)=>a+b.length,0),end=new Uint8Array(22),d=new DataView(end.buffer);
+  write32(d,0,0x06054b50);write16(d,4,0);write16(d,6,0);write16(d,8,files.length);write16(d,10,files.length);
+  write32(d,12,cSize);write32(d,16,offset);write16(d,20,0);
+  return new Blob([...chunks,...center,end],{type:'application/zip'});
+}
+
+const PRO_DEFAULTS={tab:'design',mockup:'qr',exportTarget:'qr',brandName:'LUMEN STUDIO',contactName:'Ideas que conectan',brandDetail:'WWW.TUMARCA.COM',designStyle:'linen',layoutMode:'right',typeface:'sans',texture:false,roundedArt:true,animation:true,labView:'compare',labPrintMm:50,batchInput:'',batchBusy:false,batchIncludeLogo:false,kitName:'Mi kit azul',kits:[]};
 class StudioPro extends Studio {
-  constructor(props){super(props);this.state={...this.state,...PRO_DEFAULTS};}
+  constructor(props){super(props);this.state={...this.state,...PRO_DEFAULTS,kits:getKits()};}
   reset(){this.setState(s=>({...DEF,...PRO_DEFAULTS,fields:{...DF},theme:s.theme,history:s.history,toast:'',busy:false}));this.tell('Diseño restablecido.');}
   load(entry){this.setState({...DEF,...PRO_DEFAULTS,...entry.config,fields:{...DF,...entry.config.fields},historyVisible:false,history:readHistory(),toast:''});this.tell('Diseño recuperado.');}
   fieldText(label,key,placeholder,maxLength=70){const v=this.state[key];return h('label',{className:'field'},h('span',{className:'label'},label),h('input',{value:v,placeholder,maxLength,onChange:e=>this.setP(key,e.target.value)}));}
   buttonGrid(values,current,onChange,cl='optiongrid'){return h('div',{className:cl},values.map(v=>h('button',{key:v[0],type:'button',className:'optiontile '+(current===v[0]?'selected':''),onClick:()=>onChange(v[0])},v[2]?I(v[2],21):null,h('span',null,v[1]),current===v[0]?h('i',{className:'selectcheck'},I('check',11)):null)));}
+  async exportBatch(){const s=this.state;this.setState({batchBusy:true});try{
+    const batch=parseBatchInput(s.batchInput);
+    if(batch.errors.length)throw Error(batch.errors.slice(0,2).join(' · ')+(batch.errors.length>2?' · Más errores…':''));
+    if(!batch.entries.length)throw Error('Agrega al menos una URL válida para exportar.');
+    const files=[],manifest=[['Nombre','URL','Archivo'].map(csvValue).join(',')];
+    for(let i=0;i<batch.entries.length;i++){
+      const it=batch.entries[i],name=String(i+1).padStart(2,'0')+'-'+cleanName(it.title)+'.svg';
+      const cfg={...s,frame:'none',transparent:false,logoMode:s.batchIncludeLogo?s.logoMode:'none'};
+      const svg=renderQR(cfg,it.url).svg;
+      files.push({name:'qr/'+name,data:svg});
+      manifest.push([it.title,it.url,'qr/'+name].map(csvValue).join(','));
+    }
+    files.unshift({name:'manifest.csv',data:'\ufeff'+manifest.join('\r\n')});
+    files.push({name:'LEEME.txt',data:'QR ATELIER · PRO LAB\r\n'+batch.entries.length+' códigos QR SVG vectoriales.\r\nCada archivo es un QR estático; el enlace debe mantenerse activo.\r\nComprueba la lectura antes de imprimir.\r\n'});
+    saveBlob(zipArchive(files),'QR-Atelier-Lote-'+stamp()+'.zip');this.tell(batch.entries.length+' QR vectoriales exportados en ZIP.');
+  }catch(e){this.tell(e.message||'No se pudo generar el ZIP.');}finally{this.setState({batchBusy:false});}}
+  saveKit(){const s=this.state,name=String(s.kitName||'Mi identidad').trim().slice(0,40)||'Mi identidad';
+    const config={};for(const key of BRAND_KEYS)config[key]=s[key];
+    const entry={id:Date.now(),name,created:new Date().toISOString(),config};
+    try{const kits=[entry,...getKits()].slice(0,12);saveKits(kits);this.setState({kits});this.tell('Kit de marca guardado localmente.');}catch(e){this.tell('No fue posible guardar el kit de marca.');}
+  }
+  applyKit(entry){this.setState({...entry.config,preset:'custom',scanResult:''});this.tell('Kit '+entry.name+' aplicado.');}
+  deleteKit(id){try{const kits=getKits().filter(x=>x.id!==id);saveKits(kits);this.setState({kits});this.tell('Kit eliminado.');}catch(e){this.tell('No se pudo eliminar el kit.');}}
+  exportProject(){const s=this.state;const keys=[...Object.keys(DEF),...Object.keys(PRO_DEFAULTS)];const config={};for(const key of keys){if(key in s&&!['busy','batchBusy','toast','history','kits','historyVisible','scanResult'].includes(key))config[key]=s[key];}
+    saveBlob(new Blob([JSON.stringify({format:'qr-atelier-project',version:7,created:new Date().toISOString(),config},null,2)],{type:'application/json'}),'QR-Atelier-Proyecto-'+stamp()+'.json');this.tell('Proyecto editable JSON descargado.');
+  }
+  async importProject(e){const file=e.target.files?.[0];if(!file)return;try{
+    if(file.size>2*1024*1024)throw Error('El proyecto JSON supera 2 MB.');
+    const object=JSON.parse(await file.text());if(object.format!=='qr-atelier-project'||typeof object.config!=='object'||!object.config)throw Error('El JSON no es un proyecto de QR Atelier.');
+    const allowed=[...Object.keys(DEF),...Object.keys(PRO_DEFAULTS)],config={};
+    for(const key of allowed){if(key in object.config&&!['busy','batchBusy','toast','history','kits'].includes(key))config[key]=object.config[key];}
+    if(config.fields){config.fields={...DF,...config.fields};}
+    if(!SHAPES.some(x=>x[0]===config.shape))config.shape='liquid';
+    this.setState({...config,tab:'design',kits:getKits(),history:readHistory(),busy:false,batchBusy:false,scanResult:''});this.tell('Proyecto recuperado y editable.');
+  }catch(err){this.tell(err.message||'No se pudo leer el proyecto.');}e.target.value='';}
+  renderLabCompare(art){const s=this.state;
+    return this.block('Galería de resultados reales','Compara seis alternativas renderizadas con el mismo contenido, no imágenes de muestra. Aplica una en un clic.',
+      art.error?h('div',{className:'inlinehelp'},I('alert',17),'Completa el contenido para visualizar las alternativas.'):
+      h('div',{className:'lab-compare-grid'},PROOF_STYLES.map(p=>{
+        let sample=null;try{sample=renderQR({...s,...p,frame:'none',transparent:false,background:'#ffffff'},art.data);}catch(e){}
+        return h('button',{key:p.id,className:'lab-variant',type:'button',disabled:!sample,onClick:()=>this.setState({shape:p.shape,primary:p.primary,secondary:p.secondary,eyeColor:p.eyeColor,pupilColor:p.pupilColor,gradient:p.gradient,frame:'none',preset:'custom',tab:'design'})},
+          h('div',{className:'lab-qr',dangerouslySetInnerHTML:{__html:sample?.svg||''}}),h('strong',null,p.name),h('small',null,p.subtitle),h('span',{className:'lab-action'},'Aplicar estilo →'));
+      })),'01');}
+  renderLabAudit(art,quality){const s=this.state,side=art.side||0,mm=Number(s.labPrintMm||50),moduleMM=side?mm/side:0;
+    const problems=[];
+    if(quality.ratio<4.5)problems.push('Mejora el contraste de la tinta.');
+    if(s.margin<4)problems.push('Usa al menos cuatro módulos de zona silenciosa.');
+    if(moduleMM&&moduleMM<.45)problems.push('Los módulos resultan pequeños para una impresión exigente.');
+    if(s.logoMode!=='none'&&s.level!=='H')problems.push('Con logotipo, considera corrección H.');
+    if(s.logoMode!=='none'&&s.logoSize>20)problems.push('Reduce el tamaño del logotipo.');
+    const text=problems.length?problems.join(' '):'Parámetros orientativos favorables. No sustituye la prueba con cámara sobre el soporte final.';
+    return h('div',null,
+      this.block('Simulador de impresión y riesgo','Evalúa dimensiones reales y densidad antes de enviar el archivo a imprenta.',h('div',null,
+        this.range('Tamaño del QR impreso','labPrintMm',20,150,5,' mm'),
+        h('div',{className:'lab-stats'},
+          h('div',{className:'lab-stat'},h('strong',null,side||'—'),h('span',null,'módulos por lado, con margen')),
+          h('div',{className:'lab-stat'},h('strong',null,moduleMM?moduleMM.toFixed(2):'—'),h('span',null,'mm aproximados por módulo')),
+          h('div',{className:'lab-stat'},h('strong',null,quality.ratio.toFixed(1)+':1'),h('span',null,'contraste mínimo orientativo'))),
+        h('div',{className:'lab-risk '+(problems.length?'warning':'')},h('strong',null,problems.length?'Recomendaciones antes de imprimir':'Parámetros favorables'),text),
+        art.error?null:h('div',{className:'lab-preview-size'},h('div',{style:{width:'min(100%,'+Math.min(300,mm*2)+'px)'} ,dangerouslySetInnerHTML:{__html:art.svg}})),
+        h('div',{className:'lab-actions'},h('button',{className:'ghostbtn',disabled:!!art.error||s.busy,onClick:()=>this.action('test',art)},I('shield',17),'Intentar lectura automática'),h('button',{className:'lightbtn',disabled:!!art.error,onClick:()=>this.print(art)},I('printer',17),'Ficha de impresión')),
+        s.scanResult?h('div',{className:'inlinehelp'},s.scanResult):null),'01'),
+      this.block('Buenas prácticas verificables','El QR sigue siendo un símbolo digital: un estilo vistoso no debe comprometer su lectura.',h('div',{className:'editor-tip'},I('shield',20),h('span',null,'Evita fondos con textura justo detrás del QR, impresión demasiado pequeña, acabados reflectantes y ojos muy alterados. Verifica el archivo final con varios teléfonos.')),'02'));
+  }
+  renderLabBatch(){const s=this.state;let parsed={entries:[],errors:[]};try{parsed=parseBatchInput(s.batchInput);}catch(e){parsed={entries:[],errors:[e.message]};}
+    return h('div',null,this.block('Generador por lotes','Crea hasta 40 QR SVG en una sola descarga ZIP. No subimos enlaces ni datos a ningún servidor.',h('div',null,
+      h('label',{className:'field'},h('span',{className:'label'},'Una URL por línea, o Etiqueta | URL'),
+        h('textarea',{className:'lab-input',rows:7,value:s.batchInput,onChange:e=>this.setP('batchInput',e.target.value),placeholder:'Catálogo | https://ejemplo.com/catalogo\nReserva | https://ejemplo.com/reserva\nhttps://ejemplo.com/contacto'})),
+      h('div',{className:'sectionrow'},h('strong',null,parsed.entries.length+' enlaces válidos'),h('span',{className:'smallnote'},parsed.errors.length+' advertencias')),
+      parsed.errors.length?h('div',{className:'lab-risk warning'},parsed.errors.slice(0,3).join(' · ')):null,
+      h('div',{className:'switchrow'},h('div',null,h('strong',null,'Integrar logotipo actual'),h('p',null,'Desactivado por defecto para mejorar la compatibilidad')),h('input',{className:'toggle',type:'checkbox',checked:s.batchIncludeLogo,onChange:e=>this.setP('batchIncludeLogo',e.target.checked)})),
+      h('div',{className:'lab-actions'},h('button',{className:'primarybtn',disabled:s.batchBusy||!parsed.entries.length||!!parsed.errors.length,onClick:()=>this.exportBatch()},I('download',16),s.batchBusy?'Preparando archivos…':'Exportar lote SVG + CSV (.ZIP)')),
+      h('div',{className:'inlinehelp'},I('shield',16),'Se incluye un manifest.csv para relacionar cada URL con su SVG, ideal para etiquetas y fichas de productos.')),'01'));
+  }
+  renderLabKits(){const s=this.state;return h('div',null,
+    this.block('Bóveda de identidad visual','Guarda estilos de marca reutilizables. Los kits no contienen tus enlaces ni contraseñas.',h('div',null,
+      h('label',{className:'field'},h('span',{className:'label'},'Nombre del kit'),h('input',{value:s.kitName,maxLength:40,onChange:e=>this.setP('kitName',e.target.value),placeholder:'Mi marca · Azul rey'})),
+      h('div',{className:'lab-actions'},h('button',{className:'primarybtn',onClick:()=>this.saveKit()},I('bookmark',16),'Guardar identidad actual')),
+      h('div',{className:'kit-list'},s.kits.length?s.kits.map(k=>h('div',{className:'kit-row',key:k.id},
+        h('div',null,h('strong',null,k.name),h('small',null,'Creado '+new Date(k.created).toLocaleDateString('es-MX'))),
+        h('div',{className:'kit-actions'},h('button',{onClick:()=>this.applyKit(k)},'Aplicar'),h('button',{onClick:()=>this.deleteKit(k.id),title:'Eliminar este kit'},I('trash',15))))):h('div',{className:'inlinehelp'},'Tus kits de marca aparecerán aquí.'))),'01'),
+    this.block('Transferir proyectos editables','Exporta todo el proyecto en JSON o recupera una versión anterior sin perder los ajustes.',h('div',null,
+      h('div',{className:'lab-actions'},h('button',{className:'primarybtn',onClick:()=>this.exportProject()},I('download',16),'Descargar proyecto JSON'),
+        h('label',{className:'lightbtn',style:{cursor:'pointer',padding:'11px 15px',borderRadius:10,display:'inline-flex',alignItems:'center',gap:8}},I('upload',16),'Importar proyecto',h('input',{type:'file',accept:'.json,application/json',hidden:true,onChange:e=>this.importProject(e)}))),
+      h('div',{className:'inlinehelp'},I('shield',16),'El proyecto JSON puede contener enlaces, datos de contacto y logotipos. Guárdalo donde corresponda.')),'02'));
+  }
+  renderLab(art,quality){const s=this.state;
+    return h('div',{className:'panelpage enter'},
+      h('div',{className:'pro-lab-hero'},h('small',null,'QR ATELIER · EXPERIMENTAL TOOLS'),h('strong',null,'PRO LAB · Creative Intelligence'),h('p',null,'Compara, calibra, exporta en lote y guarda identidades visuales. Todo en tu navegador.')),
+      h('div',{className:'lab-subtabs'},[['compare','Comparar estilos'],['audit','Auditoría de impresión'],['batch','Lotes SVG + CSV'],['kits','Brand Vault']].map(t=>h('button',{key:t[0],type:'button',className:s.labView===t[0]?'active':'',onClick:()=>this.setP('labView',t[0])},t[1]))),
+      s.labView==='compare'?this.renderLabCompare(art):s.labView==='audit'?this.renderLabAudit(art,quality):s.labView==='batch'?this.renderLabBatch():this.renderLabKits());
+  }
+
   renderMockups(){const s=this.state;const picked=STYLES.find(x=>x.id===s.designStyle)||STYLES[0];return h('div',{className:'panelpage enter'},
     this.block('¿Dónde vivirá tu QR?','Elige una pieza real de diseño. Cada escenario se exporta como SVG/PNG completo, sin perder la calidad del QR.',
       h('div',{className:'formatgrid'},FORMATS.map(([id,label,ic])=>h('button',{key:id,type:'button',className:'formatcard '+(s.mockup===id?'selected':''),onClick:()=>this.setState({mockup:id,exportTarget:id==='qr'?'qr':'design'})},h('span',{className:'formaticon'},I(ic,22)),h('span',null,label),s.mockup===id?h('i',{className:'formatcheck'},I('check',12)):null))), '01'),
@@ -491,9 +645,10 @@ class StudioPro extends Studio {
   );}
   renderDesign(){const s=this.state;return h('div',{className:'panelpage enter'},
     this.block('Paletas de autor','Tu QR conserva la misma apariencia que elegiste. Experimenta con más combinaciones.',h('div',{className:'presetgrid'},PRESETS.map(p=>h('button',{key:p.id,className:'preset '+(s.preset===p.id?'selected':''),onClick:()=>this.preset(p.id)},h('span',{className:'presetpreview',style:{background:p.bg,color:p.p}},h('span',null)),h('strong',null,p.name)))),'01'),
-    this.block('Formas continuas, sin mosaicos','Fluido une todos los módulos en un solo trazado SVG. El degradado ocupa el QR completo, sin repetirse en cada cuadro.',h('div',{className:'shapes'},SHAPES.map(x=>h('button',{key:x[0],className:'shape '+(s.shape===x[0]?'active':''),onClick:()=>this.setP('shape',x[0])},h('span',{className:'shapeart '+x[0],dangerouslySetInnerHTML:{__html:shapeThumbnail(x[0])}}),x[1]))),'02'),
+    this.block('Formas continuas, sin mosaicos','Fluido une todos los módulos en un solo trazado SVG. El degradado ocupa el QR completo, sin repetirse en cada cuadro.',h('div',{className:'shapes'},SHAPES.map(x=>h('button',{key:x[0],className:'shape '+(s.shape===x[0]?'active':''),onClick:()=>this.setP('shape',x[0])},h('span',{className:'shapeart '+x[0],dangerouslySetInnerHTML:{__html:shapeThumbnail(x[0])}}),h('span',null,x[1]),h('small',null,x[2])))),'02'),
     this.block('Ojos del QR','Los ojos cuadrados son los más compatibles con lectores. Los demás están disponibles para experimentar.',h('div',{className:'fieldgrid'},h('label',{className:'field'},h('span',{className:'label'},'Marco exterior'),h('select',{value:s.eye,onChange:e=>this.setP('eye',e.target.value)},[['square','Cuadrado · recomendado'],['rounded','Redondeado'],['circle','Circular']].map(v=>h('option',{key:v[0],value:v[0]},v[1])))),h('label',{className:'field'},h('span',{className:'label'},'Centro'),h('select',{value:s.pupil,onChange:e=>this.setP('pupil',e.target.value)},[['circle','Circular'],['soft','Redondeado'],['square','Cuadrado']].map(v=>h('option',{key:v[0],value:v[0]},v[1]))))),'03'),
-    this.block('Color y degradados','Personaliza tintas, fondo y ángulo del degradado.',h('div',null,this.seg('Tinta',[['solid','Sólido'],['linear','Lineal'],['radial','Radial']],s.gradient,v=>this.setP('gradient',v)),s.gradient==='linear'?h('div',{className:'rangespace'},this.range('Rotación','angle',0,360,5,'°')):null,h('div',{className:'subdivider'}),this.colors(s),h('div',{className:'switchrow'},h('span',null,'Fondo del QR transparente'),h('input',{className:'toggle',type:'checkbox',checked:s.transparent,onChange:e=>this.setP('transparent',e.target.checked)}))),'04')
+    this.block('Microajustes del trazo','Afina el carácter del QR sin generar mosaicos ni degradados repetidos.',h('div',{className:'rangespace'},this.range('Presencia del módulo','moduleScale',78,104,1,'%'),this.range('Suavidad de curvas','curve',0,100,1,'%'),this.range('Trazo de ojos','eyeStroke',0.8,1.5,0.05,'x'),h('div',{className:'inlinehelp'},I('sparkles',16),'Nube y Fluido aprovechan más la suavidad. Cinta y Píldoras responden mejor a la presencia del módulo.')),'04'),
+    this.block('Color y degradados','Personaliza tintas, fondo y ángulo del degradado.',h('div',null,this.seg('Tinta',[['solid','Sólido'],['linear','Lineal'],['radial','Radial'],['tritone','3 tonos']],s.gradient,v=>this.setP('gradient',v)),(s.gradient==='linear'||s.gradient==='tritone')?h('div',{className:'rangespace'},this.range('Rotación','angle',0,360,5,'°')):null,h('div',{className:'subdivider'}),this.colors(s),s.gradient==='tritone'?h('div',{className:'field',style:{marginTop:15}},h('span',{className:'label'},'Tono intermedio'),inputColor(s.tertiary||'#24c4ee','Tono intermedio',v=>this.setP('tertiary',v))):null,h('div',{className:'switchrow'},h('span',null,'Fondo del QR transparente'),h('input',{className:'toggle',type:'checkbox',checked:s.transparent,onChange:e=>this.setP('transparent',e.target.checked)}))),'05')
   );}
   renderExports(qrArt,quality){const s=this.state,full=composed(s,qrArt),target=s.exportTarget==='qr'?qrArt:full;return h('div',{className:'panelpage enter'},
     this.block('Archivos listos para el mundo real','Exporta solamente el QR o la pieza completa con el branding que acabas de diseñar.',h('div',null,
@@ -535,20 +690,19 @@ class StudioPro extends Studio {
       h('div',{className:'scanfoot'},I(quality.good?'shield':'alert',17),h('span',null,`Contraste ${quality.ratio.toFixed(1)}:1`,quality.good?' · Prueba recomendada antes de imprimir.':' · Revisa colores, logo o márgenes.'))
     );
   }
-  render(){const s=this.state,qrArt=getArt(s),quality=contrast(s);const tabs=[['content','Contenido','link'],['design','Código QR','wand'],['brand','Marca','sparkles'],['mockups','Diseños','layers'],['export','Exportar','download']];return h('div',{className:'studio-shell'},
+  render(){const s=this.state,qrArt=getArt(s),quality=contrast(s);const tabs=[['content','Contenido','link'],['design','Código QR','wand'],['brand','Marca','sparkles'],['mockups','Diseños','layers'],['export','Exportar','download'],['lab','PRO LAB','sparkles']];return h('div',{className:'studio-shell'},
     h('header',{className:'studio-header'},
       h('div',{className:'studio-logo'},h('div',{className:'logo-glyph'},h('i'),h('i'),h('i'),h('i')),h('div',null,h('strong',null,'QR',h('em',null,'ATELIER')),h('small',null,'CREATIVE STUDIO'))),
       h('div',{className:'header-path'},'Tu espacio creativo',h('span',null,'/'),h('strong',null,'Nuevo diseño')),h('div',{className:'header-actions'},h('span',{className:'localpill'},I('shield',15),'Privado y local'),h('button',{className:'icon-button',title:s.theme==='light'?'Cambiar a modo oscuro':'Cambiar a modo claro',onClick:()=>this.setP('theme',s.theme==='light'?'dark':'light')},I(s.theme==='light'?'moon':'sun',18)),h('button',{className:'header-save',onClick:()=>this.save()},I('bookmark',16),'Guardar diseño'))),
     h('div',{className:'studio-columns'},
-      h('nav',{className:'left-rail'},h('div',{className:'rail-label'},'CREAR CÓDIGO'),h('div',{className:'rail-list'},TYPES.map(x=>h('button',{key:x[0],type:'button',className:'rail-item '+(s.type===x[0]?'active':''),onClick:()=>this.setState({type:x[0],tab:'content',scanResult:''})},I(x[2],18),h('span',null,x[1]),s.type===x[0]?h('i',{className:'raildot'}):null))),h('div',{className:'rail-divider'}),h('div',{className:'rail-promo'},h('div',{className:'promo-star'},I('sparkles',21)),h('strong',null,'Más que un QR.'),h('p',null,'Diseña piezas listas para impresiones, menús, eventos y empaques.'),h('button',{onClick:()=>this.setP('tab','mockups')},'Explorar diseños',I('arrow',14)))),
-      h('main',{className:'studio-editor'},h('div',{className:'editor-intro'},h('div',{className:'editor-overline'},h('i',null),'DESIGN STUDIO · V5.0'),h('h1',null,'Diseña algo que ',h('em',null,'se recuerde.')),h('p',null,'Tu QR, tu identidad. Convierte cualquier enlace en una experiencia visual que merece ser escaneada.')),
+      h('nav',{className:'left-rail'},h('div',{className:'rail-label'},'CREAR CÓDIGO'),h('div',{className:'rail-list'},TYPES.map(x=>h('button',{key:x[0],type:'button',className:'rail-item '+(s.type===x[0]?'active':''),onClick:()=>this.setState({type:x[0],tab:'content',scanResult:''})},I(x[2],18),h('span',null,x[1]),s.type===x[0]?h('i',{className:'raildot'}):null))),h('div',{className:'rail-divider'}),h('div',{className:'rail-promo'},h('div',{className:'promo-star'},I('sparkles',21)),h('strong',null,'Más que un QR.'),h('p',null,'Compara 12 formas, simula impresión, crea lotes y guarda tus kits de marca.'),h('button',{onClick:()=>this.setP('tab','lab')},'Abrir PRO LAB',I('arrow',14)))),
+      h('main',{className:'studio-editor'},h('div',{className:'editor-intro'},h('div',{className:'editor-overline'},h('i',null),'ROYAL BLUE STUDIO · V7.0'),h('h1',null,'Diseña algo que ',h('em',null,'se recuerde.')),h('p',null,'Tu QR, tu identidad. Convierte cualquier enlace en una experiencia visual que merece ser escaneada.')),
         h('div',{className:'pro-tabs'},tabs.map(x=>h('button',{key:x[0],className:'pro-tab '+(s.tab===x[0]?'active':''),onClick:()=>this.setP('tab',x[0])},I(x[2],17),h('span',null,x[1])))),
-        h('div',{className:'tab-content',key:s.tab},s.tab==='content'?this.renderContent(qrArt):s.tab==='design'?this.renderDesign():s.tab==='brand'?this.renderBrand():s.tab==='mockups'?this.renderMockups():this.renderExports(qrArt,quality))),
+        h('div',{className:'tab-content',key:s.tab},s.tab==='content'?this.renderContent(qrArt):s.tab==='design'?this.renderDesign():s.tab==='brand'?this.renderBrand():s.tab==='mockups'?this.renderMockups():s.tab==='lab'?this.renderLab(qrArt,quality):this.renderExports(qrArt,quality))),
       this.renderProPreview(qrArt,quality)
     ),
     s.toast?h('div',{className:'toast',role:'status'},I('check',17),s.toast):null
   );}
 }
 
-const mount=$('root');if(typeof ReactDOM.createRoot==='function')ReactDOM.createRoot(mount).render(h(StudioPro));else ReactDOM.render(h(StudioPro),mount);
-})();
+export default StudioPro;
